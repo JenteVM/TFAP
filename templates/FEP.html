@@ -4,65 +4,65 @@
 <title>AuthPage</title>
 </head>
 <body>
-<p id="formFilledOut" style="display:none">Please wait while your log in information is being handled.</p>
-<form id="Form" type="POST" style="display:contents;" onsubmit="authReq();return false;">
-<input type="text" required id="Uname">
+<p id="formStatus" style="display:none">Please wait while your log in information is being handled.</p>
+<form id="authForm" type="POST" style="display:contents;" onsubmit="authReq();return false;">
+<input type="text" required id="username">
 <br>
-<input id="pass" type="password" required>
+<input id="password" type="password" required>
 <br>
 <input type="submit">
 </form>
 <br>
-<p id="constat">There is an LoadingError</p>
+<p id="connectionStatus">There is an LoadingError</p>
 </body>
 <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
 <script>
-const form = document.getElementById("Form")
-const formFilledOut = document.getElementById("formFilledOut")
-const constat = document.getElementById("constat")
+const authForm = document.getElementById("authForm")
+const formStatusEl = document.getElementById("formStatus")
+const connectionStatusEl = document.getElementById("connectionStatus")
 const password = document.getElementById("pass")
-var timeoutAmount = 0
-constat.innerHTML = "Not Connected";
-window.onload(__testConnection__())
-function __testConnection__(){
-    if(constat.innerHTML!="trying to connect" & constat.innerHTML!="Connected"){
-        if(constat.innerHTML=="Not Connected"){constat.innerHTML = "trying to connect";}
-        ConTimeout = setTimeout(function(){
-            if(constat.innerHTML!="Connected"){
+let timeoutAmount = 0
+connectionStatusEl.innerHTML = "Not Connected";
+window.onload(testConnection())
+function testConnection(){
+    if(connectionStatusEl.innerHTML!="trying to connect" & connectionStatusEl.innerHTML!="Connected"){
+        if(connectionStatusEl.innerHTML=="Not Connected"){connectionStatusEl.innerHTML = "trying to connect";}
+        connectionTimeout = setTimeout(function(){
+            if(connectionStatusEl.innerHTML!="Connected"){
                 timeoutAmount = timeoutAmount+1
                 let timeOutMessage = "("+timeoutAmount+") TimeOutError, trying to reconnect.";
-                constat.innerHTML = timeOutMessage;
+                connectionStatusEl.innerHTML = timeOutMessage;
                 if(timeoutAmount>=10){
-                    constat.innerHTML = "Connection Failed";
+                    connectionStatusEl.innerHTML = "Connection Failed";
                 }
                 else{
-                    __testConnection__();
+                    testConnection();
                 }
             }
         }, 1000);
         $.ajax({
             type: "POST",
-            url: "{{url_for('conStat')}}",
+            url: "{{url_for('connectionStatus')}}",
             data: {},
-            success: function(returnedval){constat.innerHTML = returnedval;},
+            success: function(statusText){connectionStatusEl.innerHTML = statusText;},
         })
     }
 }
 function authReq(){
-    var username = document.getElementById("Uname").value
-    var password = document.getElementById("pass").value
+    let username = document.getElementById("username").value
+    let password = document.getElementById("password").value
     const DBM = true
     $.ajax({
         type: "POST",
         url: "{{url_for('infoHandler')}}",
         data: {"name":username,"password":password,"debug":DBM},
         success: function(returned_values){
-            form.style.display = "none";
-            formFilledOut.style.display="contents";
+            authForm.style.display = "none";
+            formStatusEl.style.display="contents";
             formStatus = returned_values.form_status
-            isdb = returned_values.ISDB
-            formFilledOut.innerHTML=formStatus;
-            if(isdb == true){
+            in_database = returned_values.ISDB
+            formStatusEl.innerHTML=formStatus;
+            if(in_database == true){
                 constat.innerHTML = "Connection terminated as part of a succesfull form."
             }
         },
