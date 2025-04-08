@@ -1,72 +1,80 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>AuthPage</title>
+    <title>AuthPage</title>
 </head>
+
 <body>
-<p id="formFilledOut" style="display:none">Please wait while your log in information is being handled.</p>
-<form id="Form" type="POST" style="display:contents;" onsubmit="authReq();return false;">
-<input type="text" required id="Uname">
-<br>
-<input id="pass" type="password" required>
-<br>
-<input type="submit">
-</form>
-<br>
-<p id="constat">There is an LoadingError</p>
+    <p id="formStatus" style="display:none">Please wait while your log in information is being handled.</p>
+    <form id="authForm" type="POST" style="display:contents;">
+        <input id="username" name="name" type="text" required>
+        <br>
+        <input id="password" name="password" type="password" required>
+        <br>
+        <input type="submit">
+    </form>
+    <br>
+    <p id="connectionStatus">There is an LoadingError</p>
 </body>
-<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
 <script>
-const form = document.getElementById("Form")
-const formFilledOut = document.getElementById("formFilledOut")
-const constat = document.getElementById("constat")
-const password = document.getElementById("pass")
-var timeoutAmount = 0
-constat.innerHTML = "Not Connected";
-window.onload(__testConnection__())
-function __testConnection__(){
-    if(constat.innerHTML!="trying to connect" & constat.innerHTML!="Connected"){
-        if(constat.innerHTML=="Not Connected"){constat.innerHTML = "trying to connect";}
-        ConTimeout = setTimeout(function(){
-            if(constat.innerHTML!="Connected"){
-                timeoutAmount = timeoutAmount+1
-                let timeOutMessage = "("+timeoutAmount+") TimeOutError, trying to reconnect.";
-                constat.innerHTML = timeOutMessage;
-                if(timeoutAmount>=10){
-                    constat.innerHTML = "Connection Failed";
+    const authForm = document.getElementById("authForm")
+    const formStatusEl = document.getElementById("formStatus")
+    const connectionStatusEl = document.getElementById("connectionStatus")
+    const password = document.getElementById("pass")
+    let timeoutAmount = 0
+    connectionStatusEl.innerHTML = "Not Connected";
+    window.onload = testConnection()
+    function testConnection() {
+        if (connectionStatusEl.innerHTML != "trying to connect" & connectionStatusEl.innerHTML != "Connected") {
+            if (connectionStatusEl.innerHTML == "Not Connected") { connectionStatusEl.innerHTML = "trying to connect"; }
+            connectionTimeout = setTimeout(function () {
+                if (connectionStatusEl.innerHTML != "Connected") {
+                    timeoutAmount = timeoutAmount + 1
+                    let timeOutMessage = "(" + timeoutAmount + ") TimeOutError, trying to reconnect.";
+                    connectionStatusEl.innerHTML = timeOutMessage;
+                    if (timeoutAmount >= 10) {
+                        connectionStatusEl.innerHTML = "Connection Failed";
+                    }
+                    else {
+                        testConnection();
+                    }
                 }
-                else{
-                    __testConnection__();
-                }
-            }
-        }, 1000);
-        $.ajax({
-            type: "POST",
-            url: "{{url_for('conStat')}}",
-            data: {},
-            success: function(returnedval){constat.innerHTML = returnedval;},
-        })
+            }, 1000);
+            fetch("{{url_for('connectionStatus')}}", {
+                method: "POST",
+            })
+                .then(res => res.text())
+                .then(statusText => {
+                    connectionStatusEl.innerHTML = statusText;
+                })
+
+        }
     }
-}
-function authReq(){
-    var username = document.getElementById("Uname").value
-    var password = document.getElementById("pass").value
-    const DBM = true
-    $.ajax({
-        type: "POST",
-        url: "{{url_for('infoHandler')}}",
-        data: {"name":username,"password":password,"debug":DBM},
-        success: function(returned_values){
-            form.style.display = "none";
-            formFilledOut.style.display="contents";
-            formStatus = returned_values.form_status
-            isdb = returned_values.ISDB
-            formFilledOut.innerHTML=formStatus;
-            if(isdb == true){
-                constat.innerHTML = "Connection terminated as part of a succesfull form."
-            }
-        },
-    })
-}
+    function authReq(e) {
+        e.preventDefault()
+        let username = document.getElementById("username").value
+        let password = document.getElementById("password").value
+        const DBM = true
+        let formData = new FormData(authForm)
+        formData.append("debug", DBM)
+        fetch("{{url_for('infoHandler')}}", {
+            method: "POST",
+            body: formData,
+        })
+            .then(res => res.json())
+            .then(returned_values => {
+                authForm.style.display = "none";
+                formStatusEl.style.display = "contents";
+                formStatus = returned_values.form_status
+                in_database = returned_values.ISDB
+                formStatusEl.innerHTML = formStatus;
+                if (in_database == true) {
+                    connectionStatusEl.innerHTML = "Connection terminated as part of a succesfull form."
+                }
+            })
+    }
+    authForm.addEventListener("submit", authReq)
 </script>
+
 </html>

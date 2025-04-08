@@ -8,8 +8,8 @@ static_DB = {"Jente":"1234","Etnej":"4321"}
 def index():
     return render_template("FEP.html")
 
-@app.route("/conStat", methods=["POST"])
-def conStat():
+@app.route("/connectionStatus", methods=["POST"])
+def connectionStatus():
     page_status = "Connected"
     return page_status
 
